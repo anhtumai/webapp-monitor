@@ -1,7 +1,7 @@
 import path = require("path");
 
 import { Duration, Stack, StackProps } from "aws-cdk-lib";
-import { Runtime } from "aws-cdk-lib/aws-lambda";
+import { LayerVersion, Runtime } from "aws-cdk-lib/aws-lambda";
 import {
   LogLevel,
   NodejsFunction,
@@ -9,8 +9,10 @@ import {
 } from "aws-cdk-lib/aws-lambda-nodejs";
 import { Construct } from "constructs";
 import * as appconfig from "aws-cdk-lib/aws-appconfig";
+import * as iam from "aws-cdk-lib/aws-iam";
 
 class WebMonitorAppConfig extends Construct {
+  readonly deploymentUri: string;
   constructor(scope: Construct) {
     const id = "web-monitor-app-config";
     super(scope, id);
@@ -95,6 +97,8 @@ class WebMonitorAppConfig extends Construct {
       deploymentStrategyId: immediateDeploymentStrategy.ref,
       environmentId: webMonitorAppConfigEnv.ref,
     });
+
+    this.deploymentUri = `http://localhost:2772/applications/${webMonitorAppConfigApp.ref}/environments/${webMonitorAppConfigEnv.ref}/configurations/${webMonitorAppConfigProfile.ref}`;
   }
 }
 
@@ -103,6 +107,20 @@ export class WebappMonitorStack extends Stack {
     super(scope, id, props);
 
     const webMonitorAppConfig = new WebMonitorAppConfig(this);
+
+    const webMonitorAppConfigLayer = LayerVersion.fromLayerVersionArn(
+      this,
+      "web-monitor-app-config-layer",
+      "arn:aws:lambda:eu-central-1:066940009817:layer:AWS-AppConfig-Extension:91",
+    );
+
+    const appConfigPolicy = new iam.PolicyStatement({
+      actions: [
+        "appconfig:StartConfigurationSession",
+        "appconfig:GetLatestConfiguration",
+      ],
+      resources: ["*"],
+    });
 
     const webMonitorLambda = new NodejsFunction(this, "web-monitor-lambda", {
       functionName: "web-monitor-lambda",
@@ -113,7 +131,9 @@ export class WebappMonitorStack extends Stack {
 
       timeout: Duration.seconds(300),
       runtime: Runtime.NODEJS_18_X,
-      environment: {},
+      environment: {
+        APP_CONFIG_DEPLOYMENT_URI: webMonitorAppConfig.deploymentUri,
+      },
       bundling: {
         externalModules: ["aws-sdk"],
         target: "es2021",
@@ -122,6 +142,14 @@ export class WebappMonitorStack extends Stack {
         keepNames: true,
         sourceMap: false,
       },
+      layers: [webMonitorAppConfigLayer],
+      depsLockFilePath: "yarn.lock",
     });
+
+    webMonitorLambda.role?.attachInlinePolicy(
+      new iam.Policy(this, "app-config-policy", {
+        statements: [appConfigPolicy],
+      }),
+    );
   }
 }

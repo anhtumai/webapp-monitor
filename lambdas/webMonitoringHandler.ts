@@ -118,14 +118,14 @@ async function monitorOneWebsite(
   };
 }
 
-async function writeToDb(logContent: LogOutput[]) {
+async function writeToDb(logOutput: LogOutput) {
   await ddbDocClient.send(
     new PutCommand({
       TableName: WEB_MONITOR_DYNAMODB,
       Item: {
+        url: logOutput.url,
         time: new Date().toISOString(),
-        region: AWS_REGION,
-        logContent: JSON.stringify(logContent),
+        logContent: JSON.stringify(logOutput),
       },
     }),
   );
@@ -136,11 +136,10 @@ export async function handler(event: any) {
     .get(APP_CONFIG_DEPLOYMENT_URI)
     .json<WebMonitorConfig[]>();
 
-  const logs = await Promise.all(
-    appConfigData.map((webMonitorConfig) =>
-      monitorOneWebsite(webMonitorConfig),
-    ),
+  await Promise.all(
+    appConfigData.map(async (webMonitorConfig) => {
+      const logOutput = await monitorOneWebsite(webMonitorConfig);
+      await writeToDb(logOutput);
+    }),
   );
-
-  await writeToDb(logs);
 }

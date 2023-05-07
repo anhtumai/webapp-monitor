@@ -126,10 +126,10 @@ export class WebappMonitorStack extends Stack {
       this,
       "web-monitor-dynamodb-table",
       {
-        tableName: "web-monitor-table",
-        partitionKey: { name: "time", type: dynamodb.AttributeType.STRING },
+        tableName: `web-monitor-table-from-${this.region}`,
+        partitionKey: { name: "url", type: dynamodb.AttributeType.STRING },
         billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-        sortKey: { name: "region", type: dynamodb.AttributeType.STRING },
+        sortKey: { name: "time", type: dynamodb.AttributeType.STRING },
       },
     );
 

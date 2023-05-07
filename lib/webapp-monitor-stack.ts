@@ -2,14 +2,11 @@ import path = require("path");
 
 import { Duration, Stack, StackProps } from "aws-cdk-lib";
 import { LayerVersion, Runtime } from "aws-cdk-lib/aws-lambda";
-import {
-  LogLevel,
-  NodejsFunction,
-  NodejsFunctionProps,
-} from "aws-cdk-lib/aws-lambda-nodejs";
+import { LogLevel, NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { Construct } from "constructs";
 import * as appconfig from "aws-cdk-lib/aws-appconfig";
 import * as iam from "aws-cdk-lib/aws-iam";
+import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 
 class WebMonitorAppConfig extends Construct {
   readonly deploymentUri: string;
@@ -125,6 +122,17 @@ export class WebappMonitorStack extends Stack {
       resources: ["*"],
     });
 
+    const webMonitorTable = new dynamodb.Table(
+      this,
+      "web-monitor-dynamodb-table",
+      {
+        tableName: "web-monitor-table",
+        partitionKey: { name: "time", type: dynamodb.AttributeType.STRING },
+        billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+        sortKey: { name: "region", type: dynamodb.AttributeType.STRING },
+      },
+    );
+
     const webMonitorLambda = new NodejsFunction(this, "web-monitor-lambda", {
       functionName: "web-monitor-lambda",
       description: "Lambda for monitoring",
@@ -134,6 +142,8 @@ export class WebappMonitorStack extends Stack {
       runtime: Runtime.NODEJS_18_X,
       environment: {
         APP_CONFIG_DEPLOYMENT_URI: webMonitorAppConfig.deploymentUri,
+        WEB_MONITOR_DYNAMODB: webMonitorTable.tableName,
+        WEB_MONITOR_DYNAMODB_REGION: this.region,
       },
       bundling: {
         externalModules: ["aws-sdk"],
@@ -152,5 +162,7 @@ export class WebappMonitorStack extends Stack {
         statements: [appConfigPolicy],
       }),
     );
+
+    webMonitorTable.grantWriteData(webMonitorLambda);
   }
 }

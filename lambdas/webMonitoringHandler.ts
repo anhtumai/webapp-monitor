@@ -2,7 +2,15 @@ import got, { Response } from "got";
 
 import { DomUtils, parseDOM } from "htmlparser2";
 
-type DOM = ReturnType<typeof parseDOM>;
+import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+
+import {
+  AWS_REGION,
+  APP_CONFIG_DEPLOYMENT_URI,
+  WEB_MONITOR_DYNAMODB,
+  WEB_MONITOR_DYNAMODB_REGION,
+} from "./config";
 
 type WebMonitorConfig = {
   url: string;
@@ -30,6 +38,9 @@ type LogOutput = {
   rulesEvaluation: RuleEvaluationOutput[];
 };
 
+const ddbClient = new DynamoDBClient({ region: WEB_MONITOR_DYNAMODB_REGION });
+const ddbDocClient = DynamoDBDocumentClient.from(ddbClient);
+
 function getElapsedTimeInMs(response: Response) {
   const { timings } = response;
 
@@ -55,12 +66,12 @@ function isContainTextRule(rule: WebMonitorRule): rule is ContainTextRule {
 function evaluateRules({
   rules,
   response,
-  dom,
 }: {
   rules: WebMonitorRule[];
-  response: Response;
-  dom: DOM;
+  response: Response<string>;
 }): RuleEvaluationOutput[] {
+  const dom = parseDOM(response.body);
+
   return rules.map((rule) => {
     if (isContainTextRule(rule)) {
       const passed = DomUtils.innerText(dom).indexOf(rule.containText) > -1;
@@ -99,19 +110,30 @@ async function monitorOneWebsite(
     };
   }
 
-  const dom = parseDOM(response.body);
-
   return {
     url: webMonitorConfig.url,
     statusCode,
     elapsedTime,
-    rulesEvaluation: evaluateRules({ rules, dom, response }),
+    rulesEvaluation: evaluateRules({ rules, response }),
   };
+}
+
+async function writeToDb(logContent: LogOutput[]) {
+  await ddbDocClient.send(
+    new PutCommand({
+      TableName: WEB_MONITOR_DYNAMODB,
+      Item: {
+        time: new Date().toISOString(),
+        region: AWS_REGION,
+        logContent: JSON.stringify(logContent),
+      },
+    }),
+  );
 }
 
 export async function handler(event: any) {
   const appConfigData = await got
-    .get(process.env.APP_CONFIG_DEPLOYMENT_URI || "")
+    .get(APP_CONFIG_DEPLOYMENT_URI)
     .json<WebMonitorConfig[]>();
 
   const logs = await Promise.all(
@@ -120,5 +142,5 @@ export async function handler(event: any) {
     ),
   );
 
-  console.log("Logs", JSON.stringify(logs, undefined, 4));
+  await writeToDb(logs);
 }

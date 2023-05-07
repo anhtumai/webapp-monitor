@@ -59,7 +59,10 @@ class WebMonitorAppConfig extends Construct {
                   additionalProperties: false,
                   properties: {
                     url: { type: "string" },
-                    request: { type: "string" },
+                    request: {
+                      type: "string",
+                      enum: ["GET", "POST", "PUT", "DELETE"],
+                    },
                     rules: {
                       type: "array",
                       items: {
@@ -124,11 +127,9 @@ export class WebappMonitorStack extends Stack {
 
     const webMonitorLambda = new NodejsFunction(this, "web-monitor-lambda", {
       functionName: "web-monitor-lambda",
-
       description: "Lambda for monitoring",
       entry: path.join(__dirname, "../lambdas/webMonitoringHandler.ts"),
       handler: "handler",
-
       timeout: Duration.seconds(300),
       runtime: Runtime.NODEJS_18_X,
       environment: {

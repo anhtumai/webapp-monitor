@@ -1,6 +1,6 @@
 import got, { Response } from "got";
 
-import { DomUtils, parseDOM } from "htmlparser2";
+import { DomUtils, parseDocument } from "htmlparser2";
 
 import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
@@ -71,11 +71,12 @@ function evaluateRules({
   rules: WebMonitorRule[];
   response: Response<string>;
 }): RuleEvaluationOutput[] {
-  const dom = parseDOM(response.body);
+  const dom = parseDocument(response.body);
 
   return rules.map((rule) => {
     if (isContainTextRule(rule)) {
-      const passed = DomUtils.innerText(dom).indexOf(rule.containText) > -1;
+      const passed =
+        DomUtils.innerText(dom.children).indexOf(rule.containText) > -1;
       return {
         rule,
         passed,

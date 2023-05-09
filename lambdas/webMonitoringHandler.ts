@@ -33,7 +33,8 @@ type RuleEvaluationOutput = {
 type LogOutput = {
   url: string;
   statusCode: number;
-  elapsedTime?: number;
+  startTime: string;
+  elapsedDurationInMs?: number;
 
   rulesEvaluation: RuleEvaluationOutput[];
 };
@@ -41,7 +42,7 @@ type LogOutput = {
 const ddbClient = new DynamoDBClient({ region: WEB_MONITOR_DYNAMODB_REGION });
 const ddbDocClient = DynamoDBDocumentClient.from(ddbClient);
 
-function getElapsedTimeInMs(response: Response) {
+function getElapsedDurationInMs(response: Response) {
   const { timings } = response;
 
   if (typeof timings.end === "number") {
@@ -95,9 +96,11 @@ async function monitorOneWebsite(
 ): Promise<LogOutput> {
   const response = await got.get(webMonitorConfig.url);
 
-  const elapsedTime = getElapsedTimeInMs(response);
+  const elapsedDurationInMs = getElapsedDurationInMs(response);
 
   const statusCode = response.statusCode;
+
+  const startTime = new Date(response.timings.start).toISOString();
 
   const rules = webMonitorConfig.rules;
 
@@ -105,7 +108,8 @@ async function monitorOneWebsite(
     return {
       url: webMonitorConfig.url,
       statusCode,
-      elapsedTime,
+      startTime,
+      elapsedDurationInMs,
       rulesEvaluation: [],
     };
   }
@@ -113,7 +117,8 @@ async function monitorOneWebsite(
   return {
     url: webMonitorConfig.url,
     statusCode,
-    elapsedTime,
+    startTime,
+    elapsedDurationInMs,
     rulesEvaluation: evaluateRules({ rules, response }),
   };
 }
@@ -124,7 +129,7 @@ async function writeToDb(logOutput: LogOutput) {
       TableName: WEB_MONITOR_DYNAMODB,
       Item: {
         url: logOutput.url,
-        time: new Date().toISOString(),
+        time: logOutput.startTime,
         logContent: JSON.stringify(logOutput),
       },
     }),

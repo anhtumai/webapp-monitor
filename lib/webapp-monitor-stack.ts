@@ -7,6 +7,7 @@ import { Construct } from "constructs";
 import * as appconfig from "aws-cdk-lib/aws-appconfig";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
+import * as apigateway from "aws-cdk-lib/aws-apigateway";
 
 class WebMonitorAppConfig extends Construct {
   readonly deploymentUri: string;
@@ -164,5 +165,53 @@ export class WebappMonitorStack extends Stack {
     );
 
     webMonitorTable.grantWriteData(webMonitorLambda);
+
+    const getUrlLogContentHandler = new NodejsFunction(
+      this,
+      "get-url-log-content-handler",
+      {
+        functionName: "get-url-log-content-lambda",
+        description: "Get Url Log Content",
+        entry: path.join(__dirname, "../lambdas/getUrlLogContentHandler.ts"),
+        environment: {
+          WEB_MONITOR_DYNAMODB: webMonitorTable.tableName,
+          WEB_MONITOR_DYNAMODB_REGION: this.region,
+        },
+        handler: "handler",
+        timeout: Duration.seconds(300),
+        runtime: Runtime.NODEJS_18_X,
+        bundling: {
+          externalModules: ["aws-sdk"],
+          target: "es2021",
+          logLevel: LogLevel.ERROR,
+          minify: true,
+          keepNames: true,
+          sourceMap: false,
+        },
+        depsLockFilePath: "yarn.lock",
+      },
+    );
+
+    const getUrlLogContentApi = new apigateway.RestApi(
+      this,
+      "get-url-log-content-api",
+      {
+        restApiName: "Url Log Content Service",
+        description: "This service serves url log contents",
+      },
+    );
+
+    const getUrlLogContentIntegration = new apigateway.LambdaIntegration(
+      getUrlLogContentHandler,
+      {
+        requestTemplates: {
+          "application/json": '{ statusCode: "200" }',
+        },
+      },
+    );
+
+    getUrlLogContentApi.root.addMethod("GET", getUrlLogContentIntegration);
+
+    webMonitorTable.grantReadData(getUrlLogContentHandler);
   }
 }

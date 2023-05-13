@@ -6,8 +6,16 @@ import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 
 import {
-  AWS_REGION,
-  APP_CONFIG_DEPLOYMENT_URI,
+  AppConfigDataClient,
+  StartConfigurationSessionCommand,
+  GetLatestConfigurationCommand,
+} from "@aws-sdk/client-appconfigdata";
+
+import {
+  APP_CONFIG_REGION,
+  APP_CONFIG_APPLICATION_ID,
+  APP_CONFIG_ENVIRONMENT_ID,
+  APP_CONFIG_CONFIGURATION_PROFILE_ID,
   WEB_MONITOR_DYNAMODB,
   WEB_MONITOR_DYNAMODB_REGION,
 } from "./config";
@@ -38,6 +46,10 @@ type LogOutput = {
 
   rulesEvaluation: RuleEvaluationOutput[];
 };
+
+const appConfigDataClient = new AppConfigDataClient({
+  region: APP_CONFIG_REGION,
+});
 
 const ddbClient = new DynamoDBClient({ region: WEB_MONITOR_DYNAMODB_REGION });
 const ddbDocClient = DynamoDBDocumentClient.from(ddbClient);
@@ -137,11 +149,31 @@ async function writeToDb(logOutput: LogOutput) {
   );
 }
 
-export async function handler(event: any) {
-  const appConfigData = await got
-    .get(APP_CONFIG_DEPLOYMENT_URI)
-    .json<WebMonitorConfig[]>();
+async function getConfiguration(): Promise<WebMonitorConfig[]> {
+  const startConfigurationSessionResponse = await appConfigDataClient.send(
+    new StartConfigurationSessionCommand({
+      ApplicationIdentifier: APP_CONFIG_APPLICATION_ID,
+      EnvironmentIdentifier: APP_CONFIG_ENVIRONMENT_ID,
+      ConfigurationProfileIdentifier: APP_CONFIG_CONFIGURATION_PROFILE_ID,
+    }),
+  );
 
+  const getLatestConfigurationResponse = await appConfigDataClient.send(
+    new GetLatestConfigurationCommand({
+      ConfigurationToken:
+        startConfigurationSessionResponse.InitialConfigurationToken,
+    }),
+  );
+
+  const plainTextConfiguration = new TextDecoder().decode(
+    getLatestConfigurationResponse.Configuration,
+  );
+
+  return JSON.parse(plainTextConfiguration);
+}
+
+export async function handler(event: any) {
+  const appConfigData = await getConfiguration();
   await Promise.all(
     appConfigData.map(async (webMonitorConfig) => {
       const logOutput = await monitorOneWebsite(webMonitorConfig);

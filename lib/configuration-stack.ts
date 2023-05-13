@@ -8,10 +8,13 @@ class AppConfigConstruct extends Construct {
     const id = "web-monitor-app-config";
     super(scope, id);
 
-    const webMonitorAppConfigApp: appconfig.CfnApplication =
-      new appconfig.CfnApplication(this, "web-monitor-app-config-app", {
+    const webMonitorAppConfigApp = new appconfig.CfnApplication(
+      this,
+      "web-monitor-app-config-app",
+      {
         name: "web-monitor-app-config-app",
-      });
+      },
+    );
 
     const immediateDeploymentStrategy = new appconfig.CfnDeploymentStrategy(
       this,
@@ -25,72 +28,73 @@ class AppConfigConstruct extends Construct {
       },
     );
 
-    const webMonitorAppConfigEnv: appconfig.CfnEnvironment =
-      new appconfig.CfnEnvironment(this, "web-monitor-app-config-env", {
+    const webMonitorAppConfigEnv = new appconfig.CfnEnvironment(
+      this,
+      "web-monitor-app-config-env",
+      {
         applicationId: webMonitorAppConfigApp.ref,
         name: "Production",
-      });
+      },
+    );
 
-    const webMonitorAppConfigProfile: appconfig.CfnConfigurationProfile =
-      new appconfig.CfnConfigurationProfile(
-        this,
-        "web-monitor-configuration-profile",
-        {
-          name: "web-monitor-configuration-profile",
-          applicationId: webMonitorAppConfigApp.ref,
-          locationUri: "hosted",
-          type: "AWS.Freeform",
-          validators: [
-            {
-              content: JSON.stringify({
-                type: "array",
-                items: {
-                  type: "object",
-                  required: ["url", "request", "rules"],
-                  additionalProperties: false,
-                  properties: {
-                    url: { type: "string" },
-                    request: {
-                      type: "string",
-                      enum: ["GET", "POST", "PUT", "DELETE"],
-                    },
-                    rules: {
-                      type: "array",
-                      items: {
-                        type: "object",
-                        properties: {
-                          containText: { type: "string" },
-                        },
+    const webMonitorAppConfigProfile = new appconfig.CfnConfigurationProfile(
+      this,
+      "web-monitor-configuration-profile",
+      {
+        name: "web-monitor-configuration-profile",
+        applicationId: webMonitorAppConfigApp.ref,
+        locationUri: "hosted",
+        type: "AWS.Freeform",
+        validators: [
+          {
+            content: JSON.stringify({
+              type: "array",
+              items: {
+                type: "object",
+                required: ["url", "rules"],
+                additionalProperties: false,
+                properties: {
+                  url: { type: "string" },
+                  rules: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        containText: { type: "string" },
                       },
                     },
                   },
                 },
-              }),
-              type: "JSON_SCHEMA",
-            },
-          ],
-        },
-      );
+              },
+            }),
+            type: "JSON_SCHEMA",
+          },
+        ],
+      },
+    );
 
-    const webMonitorConfigVersion: appconfig.CfnHostedConfigurationVersion =
-      new appconfig.CfnHostedConfigurationVersion(
-        this,
-        "web-monitor-hosted-configuration-version",
-        {
-          applicationId: webMonitorAppConfigApp.ref,
-          configurationProfileId: webMonitorAppConfigProfile.ref,
-          contentType: "application/json",
-          content: JSON.stringify("[]"),
-        },
-      );
+    const webMonitorConfigVersion = new appconfig.CfnHostedConfigurationVersion(
+      this,
+      "web-monitor-hosted-configuration-version",
+      {
+        applicationId: webMonitorAppConfigApp.ref,
+        configurationProfileId: webMonitorAppConfigProfile.ref,
+        contentType: "application/json",
+        content: JSON.stringify("[]"),
+      },
+    );
 
-    new appconfig.CfnDeployment(this, "web-monitor-app-config-deployment", {
-      applicationId: webMonitorAppConfigApp.ref,
-      configurationProfileId: webMonitorAppConfigProfile.ref,
-      configurationVersion: webMonitorConfigVersion.ref,
-      deploymentStrategyId: immediateDeploymentStrategy.ref,
-      environmentId: webMonitorAppConfigEnv.ref,
-    });
+    //const webMonitorDeployment = new appconfig.CfnDeployment(
+    //this,
+    //"web-monitor-config-deployment",
+    //{
+    //applicationId: webMonitorAppConfigApp.ref,
+    //configurationProfileId: webMonitorAppConfigProfile.ref,
+    //configurationVersion: webMonitorConfigVersion.ref,
+    //deploymentStrategyId: immediateDeploymentStrategy.ref,
+    //environmentId: webMonitorAppConfigEnv.ref,
+    //},
+    //);
 
     this.deploymentUri = `http://localhost:2772/applications/${webMonitorAppConfigApp.ref}/environments/${webMonitorAppConfigEnv.ref}/configurations/${webMonitorAppConfigProfile.ref}`;
   }

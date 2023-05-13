@@ -6,8 +6,13 @@ import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 
 import {
+  AppConfigDataClient,
+  StartConfigurationSessionCommand,
+  GetLatestConfigurationCommand,
+} from "@aws-sdk/client-appconfigdata";
+
+import {
   AWS_REGION,
-  APP_CONFIG_DEPLOYMENT_URI,
   WEB_MONITOR_DYNAMODB,
   WEB_MONITOR_DYNAMODB_REGION,
 } from "./config";
@@ -38,6 +43,8 @@ type LogOutput = {
 
   rulesEvaluation: RuleEvaluationOutput[];
 };
+
+const appConfigDataClient = new AppConfigDataClient({ region: "eu-central-1" });
 
 const ddbClient = new DynamoDBClient({ region: WEB_MONITOR_DYNAMODB_REGION });
 const ddbDocClient = DynamoDBDocumentClient.from(ddbClient);
@@ -137,11 +144,31 @@ async function writeToDb(logOutput: LogOutput) {
   );
 }
 
-export async function handler(event: any) {
-  const appConfigData = await got
-    .get(APP_CONFIG_DEPLOYMENT_URI)
-    .json<WebMonitorConfig[]>();
+async function getConfiguration(): Promise<WebMonitorConfig[]> {
+  const startConfigurationSessionResponse = await appConfigDataClient.send(
+    new StartConfigurationSessionCommand({
+      ApplicationIdentifier: "1x588of",
+      EnvironmentIdentifier: "lfouhv8",
+      ConfigurationProfileIdentifier: "powaf3v",
+    }),
+  );
 
+  const getLatestConfigurationResponse = await appConfigDataClient.send(
+    new GetLatestConfigurationCommand({
+      ConfigurationToken:
+        startConfigurationSessionResponse.InitialConfigurationToken,
+    }),
+  );
+
+  const plainTextConfiguration = new TextDecoder().decode(
+    getLatestConfigurationResponse.Configuration,
+  );
+
+  return JSON.parse(plainTextConfiguration);
+}
+
+export async function handler(event: any) {
+  const appConfigData = await getConfiguration();
   await Promise.all(
     appConfigData.map(async (webMonitorConfig) => {
       const logOutput = await monitorOneWebsite(webMonitorConfig);

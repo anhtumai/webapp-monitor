@@ -1,6 +1,6 @@
 import path = require("path");
 
-import { Duration, Stack, StackProps, Fn } from "aws-cdk-lib";
+import { Duration, Stack, StackProps } from "aws-cdk-lib";
 import { Runtime } from "aws-cdk-lib/aws-lambda";
 import { LogLevel, NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { Construct } from "constructs";
@@ -17,6 +17,7 @@ interface LogSavingStackProps extends StackProps {
 }
 
 export class LogSavingStack extends Stack {
+  readonly webMonitorTableArn: string;
   constructor(scope: Construct, id: string, props: LogSavingStackProps) {
     super(scope, id, props);
 
@@ -42,7 +43,7 @@ export class LogSavingStack extends Stack {
     const webMonitorLambda = new NodejsFunction(this, "web-monitor-lambda", {
       functionName: "web-monitor-lambda",
       description: "Lambda for monitoring",
-      entry: path.join(__dirname, "../lambdas/webMonitoringHandler.ts"),
+      entry: path.join(__dirname, "../lambdas/logSaving/index.ts"),
       handler: "handler",
       timeout: Duration.seconds(300),
       runtime: Runtime.NODEJS_18_X,
@@ -74,5 +75,7 @@ export class LogSavingStack extends Stack {
     );
 
     webMonitorTable.grantWriteData(webMonitorLambda);
+
+    this.webMonitorTableArn = webMonitorTable.tableArn;
   }
 }

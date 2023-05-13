@@ -12,7 +12,6 @@ import {
 } from "@aws-sdk/client-appconfigdata";
 
 import {
-  AWS_REGION,
   APP_CONFIG_REGION,
   APP_CONFIG_APPLICATION_ID,
   APP_CONFIG_ENVIRONMENT_ID,

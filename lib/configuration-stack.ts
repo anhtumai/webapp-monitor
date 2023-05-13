@@ -3,7 +3,9 @@ import { Construct } from "constructs";
 import * as appconfig from "aws-cdk-lib/aws-appconfig";
 
 class AppConfigConstruct extends Construct {
-  readonly deploymentUri: string;
+  readonly applicationId: string;
+  readonly environmentId: string;
+  readonly configurationProfileId: string;
   constructor(scope: Construct) {
     const id = "web-monitor-app-config";
     super(scope, id);
@@ -95,20 +97,31 @@ class AppConfigConstruct extends Construct {
     //environmentId: webMonitorAppConfigEnv.ref,
     //},
     //);
-
-    this.deploymentUri = `http://localhost:2772/applications/${webMonitorAppConfigApp.ref}/environments/${webMonitorAppConfigEnv.ref}/configurations/${webMonitorAppConfigProfile.ref}`;
+    //
+    this.applicationId = webMonitorAppConfigApp.ref;
+    this.environmentId = webMonitorAppConfigEnv.ref;
+    this.configurationProfileId = webMonitorAppConfigProfile.ref;
   }
 }
 
 export class ConfigurationStack extends Stack {
+  readonly appConfig: {
+    readonly applicationId: string;
+    readonly environmentId: string;
+    readonly configurationProfileId: string;
+    readonly region: string;
+  };
+
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
     const webMonitorAppConfig = new AppConfigConstruct(this);
 
-    new CfnOutput(this, "web-monitor-app-config-deployment-uri", {
-      value: webMonitorAppConfig.deploymentUri,
-      exportName: "webMonitorAppConfigDeploymentUri",
-    });
+    this.appConfig = {
+      applicationId: webMonitorAppConfig.applicationId,
+      environmentId: webMonitorAppConfig.environmentId,
+      configurationProfileId: webMonitorAppConfig.configurationProfileId,
+      region: this.region,
+    };
   }
 }

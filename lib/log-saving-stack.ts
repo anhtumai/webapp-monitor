@@ -7,8 +7,17 @@ import { Construct } from "constructs";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 
+interface LogSavingStackProps extends StackProps {
+  readonly appConfig: {
+    readonly applicationId: string;
+    readonly environmentId: string;
+    readonly configurationProfileId: string;
+    readonly region: string;
+  };
+}
+
 export class LogSavingStack extends Stack {
-  constructor(scope: Construct, id: string, props?: StackProps) {
+  constructor(scope: Construct, id: string, props: LogSavingStackProps) {
     super(scope, id, props);
 
     const appConfigPolicy = new iam.PolicyStatement({
@@ -40,7 +49,12 @@ export class LogSavingStack extends Stack {
       environment: {
         WEB_MONITOR_DYNAMODB: webMonitorTable.tableName,
         WEB_MONITOR_DYNAMODB_REGION: this.region,
-        APP_CONFIG_REGION: "eu-central-1",
+
+        APP_CONFIG_REGION: props.appConfig.region,
+        APP_CONFIG_APPLICATION_ID: props.appConfig.applicationId,
+        APP_CONFIG_ENVIRONMENT_ID: props.appConfig.environmentId,
+        APP_CONFIG_CONFIGURATION_PROFILE_ID:
+          props.appConfig.configurationProfileId,
       },
       bundling: {
         externalModules: ["aws-sdk"],

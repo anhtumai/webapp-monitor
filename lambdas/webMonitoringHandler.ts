@@ -14,6 +14,9 @@ import {
 import {
   AWS_REGION,
   APP_CONFIG_REGION,
+  APP_CONFIG_APPLICATION_ID,
+  APP_CONFIG_ENVIRONMENT_ID,
+  APP_CONFIG_CONFIGURATION_PROFILE_ID,
   WEB_MONITOR_DYNAMODB,
   WEB_MONITOR_DYNAMODB_REGION,
 } from "./config";
@@ -150,9 +153,9 @@ async function writeToDb(logOutput: LogOutput) {
 async function getConfiguration(): Promise<WebMonitorConfig[]> {
   const startConfigurationSessionResponse = await appConfigDataClient.send(
     new StartConfigurationSessionCommand({
-      ApplicationIdentifier: "1x588of",
-      EnvironmentIdentifier: "lfouhv8",
-      ConfigurationProfileIdentifier: "powaf3v",
+      ApplicationIdentifier: APP_CONFIG_APPLICATION_ID,
+      EnvironmentIdentifier: APP_CONFIG_ENVIRONMENT_ID,
+      ConfigurationProfileIdentifier: APP_CONFIG_CONFIGURATION_PROFILE_ID,
     }),
   );
 

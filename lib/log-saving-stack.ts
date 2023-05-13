@@ -40,6 +40,7 @@ export class LogSavingStack extends Stack {
       environment: {
         WEB_MONITOR_DYNAMODB: webMonitorTable.tableName,
         WEB_MONITOR_DYNAMODB_REGION: this.region,
+        APP_CONFIG_REGION: "eu-central-1",
       },
       bundling: {
         externalModules: ["aws-sdk"],

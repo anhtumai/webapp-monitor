@@ -13,6 +13,7 @@ import {
 
 import {
   AWS_REGION,
+  APP_CONFIG_REGION,
   WEB_MONITOR_DYNAMODB,
   WEB_MONITOR_DYNAMODB_REGION,
 } from "./config";
@@ -44,7 +45,9 @@ type LogOutput = {
   rulesEvaluation: RuleEvaluationOutput[];
 };
 
-const appConfigDataClient = new AppConfigDataClient({ region: "eu-central-1" });
+const appConfigDataClient = new AppConfigDataClient({
+  region: APP_CONFIG_REGION,
+});
 
 const ddbClient = new DynamoDBClient({ region: WEB_MONITOR_DYNAMODB_REGION });
 const ddbDocClient = DynamoDBDocumentClient.from(ddbClient);

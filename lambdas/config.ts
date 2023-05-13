@@ -5,3 +5,6 @@ export const WEB_MONITOR_DYNAMODB =
 
 export const WEB_MONITOR_DYNAMODB_REGION =
   process.env.WEB_MONITOR_DYNAMODB_REGION || "eu-central-1";
+
+export const APP_CONFIG_REGION =
+  process.env.APP_CONFIG_REGION || "eu-central-1";

@@ -220,7 +220,7 @@ Otherwise, Web Monitor Lambda cannot run.
 
 ### Configuration (for developers)
 
-Developers can configure `checking period` and `checking regions` in file: `./lib/config.ts`.
+Developers can configure `checking period` and `checking regions` in file: [./lib/config.ts](./lib/config.ts).
 
 ### Destroying
 

@@ -7,35 +7,34 @@ import * as iam from "aws-cdk-lib/aws-iam";
 import * as apigateway from "aws-cdk-lib/aws-apigateway";
 import { Construct } from "constructs";
 
-interface LogGettingStackProps extends StackProps {
-  readonly logSaving: {
+interface ReportGettingStackProps extends StackProps {
+  readonly reportSaving: {
     readonly regions: string[];
     readonly dynamodbARNs: string[];
   };
 }
 
 /*
- * Log Getting Stack exposes a GET Endpoint for users to query logs stored in
-  DynamoDB Tables in different regions.
+ * ReportGettingStack exposes a GET Endpoint for users to query reports stored in DynamoDB Tables in different regions.
   It consists of one AWS Lambda and one API Gateway Rest API.
  */
-export class LogGettingStack extends Stack {
-  constructor(scope: Construct, id: string, props: LogGettingStackProps) {
+export class ReportGettingStack extends Stack {
+  constructor(scope: Construct, id: string, props: ReportGettingStackProps) {
     super(scope, id, props);
 
-    const getUrlLogContentsHandler = new NodejsFunction(
+    const getUrlReportContentsHandler = new NodejsFunction(
       this,
       "web-monitor-lambda",
       {
-        functionName: "get-url-log-contents-lambda",
-        description: "Get Url Log Contents",
+        functionName: "get-url-report-contents-lambda",
+        description: "Get Url Report Contents",
         entry: path.join(__dirname, "../lambdas/getUrlLogContents/index.ts"),
         handler: "handler",
         timeout: Duration.seconds(300),
         runtime: Runtime.NODEJS_18_X,
         environment: {
           LOG_SAVING_TABLE_NAME: "web-monitor-table",
-          LOG_SAVING_REGIONS: props.logSaving.regions.join(","),
+          LOG_SAVING_REGIONS: props.reportSaving.regions.join(","),
         },
         bundling: {
           externalModules: ["aws-sdk"],
@@ -49,28 +48,28 @@ export class LogGettingStack extends Stack {
       },
     );
 
-    const readLogSavingTablesIamPolicy = new iam.PolicyStatement({
+    const readReportSavingTablesIamPolicy = new iam.PolicyStatement({
       actions: ["dynamodb:Query"],
-      resources: props.logSaving.dynamodbARNs,
+      resources: props.reportSaving.dynamodbARNs,
     });
 
-    getUrlLogContentsHandler.role?.attachInlinePolicy(
-      new iam.Policy(this, "read-log-saving-tables-policy", {
-        statements: [readLogSavingTablesIamPolicy],
+    getUrlReportContentsHandler.role?.attachInlinePolicy(
+      new iam.Policy(this, "read-report-saving-tables-policy", {
+        statements: [readReportSavingTablesIamPolicy],
       }),
     );
 
-    const getUrlLogContentsApi = new apigateway.RestApi(
+    const getUrlReportContentsApi = new apigateway.RestApi(
       this,
-      "get-url-log-contents-api",
+      "get-url-report-contents-api",
       {
-        restApiName: "Url Log Content Service",
-        description: "This service serves url log contents",
+        restApiName: "Url Report Content Service",
+        description: "This service serves url report contents",
       },
     );
 
-    const getUrlLogContentsIntegration = new apigateway.LambdaIntegration(
-      getUrlLogContentsHandler,
+    const getUrlReportContentsIntegration = new apigateway.LambdaIntegration(
+      getUrlReportContentsHandler,
       {
         requestTemplates: {
           "application/json": '{ statusCode: "200" }',
@@ -78,6 +77,9 @@ export class LogGettingStack extends Stack {
       },
     );
 
-    getUrlLogContentsApi.root.addMethod("GET", getUrlLogContentsIntegration);
+    getUrlReportContentsApi.root.addMethod(
+      "GET",
+      getUrlReportContentsIntegration,
+    );
   }
 }

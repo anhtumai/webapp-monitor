@@ -45,7 +45,7 @@ type RuleEvaluationOutput = {
   knownRule: boolean;
 };
 
-type LogContentOutput = {
+type ReportContentOutput = {
   url: string;
   statusCode: number;
   startTime: string;
@@ -119,7 +119,7 @@ function evaluateRules({
  */
 async function monitorWebsite(
   webMonitorConfig: WebMonitorConfig,
-): Promise<LogContentOutput> {
+): Promise<ReportContentOutput> {
   const response = await got.get(webMonitorConfig.url);
 
   const elapsedDurationInMs = getElapsedDurationInMs(response);
@@ -149,14 +149,16 @@ async function monitorWebsite(
   };
 }
 
-async function putLogContentInDBTable(logContentOutput: LogContentOutput) {
+async function putReportContentInDBTable(
+  reportContentOutput: ReportContentOutput,
+) {
   await ddbDocClient.send(
     new PutCommand({
       TableName: WEB_MONITOR_DYNAMODB,
       Item: {
-        url: logContentOutput.url,
-        time: logContentOutput.startTime,
-        logContent: logContentOutput,
+        url: reportContentOutput.url,
+        time: reportContentOutput.startTime,
+        reportContent: reportContentOutput,
       },
     }),
   );
@@ -190,8 +192,8 @@ export async function handler(event: any) {
   await Promise.all(
     appConfigData.map(async (webMonitorConfig) => {
       try {
-        const logContentOutput = await monitorWebsite(webMonitorConfig);
-        await putLogContentInDBTable(logContentOutput);
+        const reportContentOutput = await monitorWebsite(webMonitorConfig);
+        await putReportContentInDBTable(reportContentOutput);
       } catch (error) {
         console.error(
           `Fail to monitor and check response of config ${webMonitorConfig}`,

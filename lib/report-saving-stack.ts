@@ -14,15 +14,15 @@ import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 
 import { Construct } from "constructs";
 
-import { logSavingWebMonitorLambdaSchedule } from "./config";
+import { reportSavingWebMonitorLambdaSchedule } from "./config";
 
 /*
- * LogSavingStack periodically sends GET requests to a list of websites,
+ * ReportSavingStack periodically sends GET requests to a list of websites,
   analyzes their response contents to check if they satisfy predefined rules,
   and logs the report into DynamoDB Table.
   It consists of one AWS Lambda scheduled by Cloudwatch Event and one DynamoDB table.
  */
-interface LogSavingStackProps extends StackProps {
+interface ReportSavingStackProps extends StackProps {
   readonly appConfig: {
     readonly applicationId: string;
     readonly environmentId: string;
@@ -31,9 +31,9 @@ interface LogSavingStackProps extends StackProps {
   };
 }
 
-export class LogSavingStack extends Stack {
+export class ReportSavingStack extends Stack {
   readonly webMonitorTableArn: string;
-  constructor(scope: Construct, id: string, props: LogSavingStackProps) {
+  constructor(scope: Construct, id: string, props: ReportSavingStackProps) {
     super(scope, id, props);
 
     const appConfigPolicy = new iam.PolicyStatement({
@@ -92,7 +92,7 @@ export class LogSavingStack extends Stack {
     new aws_events.Rule(this, "web-monitor-lambda-schedule-rule", {
       description: "Web Monitor Lambda Schedule",
       targets: [new aws_events_targets.LambdaFunction(webMonitorLambda)],
-      schedule: logSavingWebMonitorLambdaSchedule,
+      schedule: reportSavingWebMonitorLambdaSchedule,
     });
 
     webMonitorTable.grantWriteData(webMonitorLambda);

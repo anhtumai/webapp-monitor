@@ -5,17 +5,17 @@
 import { aws_events, Duration } from "aws-cdk-lib";
 
 // Checking period
-export const logSavingWebMonitorLambdaSchedule: aws_events.Schedule =
+export const reportSavingWebMonitorLambdaSchedule: aws_events.Schedule =
   aws_events.Schedule.rate(Duration.hours(1));
 
 // Checking regions
-export const logSavingStacksConfig = [
+export const reportSavingStacksConfig = [
   {
     region: "eu-central-1",
-    stackName: "WebappMonitorLogSavingFromFrankfurtStack",
+    stackName: "WebappMonitorReportSavingFromFrankfurtStack",
   },
   {
     region: "eu-west-1",
-    stackName: "WebappMonitorLogSavingFromIrelandStack",
+    stackName: "WebappMonitorReportSavingFromIrelandStack",
   },
 ];

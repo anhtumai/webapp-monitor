@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 import * as cdk from "aws-cdk-lib";
 import { ConfigurationStack } from "../lib/configuration-stack";
-import { LogGettingStack } from "../lib/log-getting-stack";
-import { LogSavingStack } from "../lib/log-saving-stack";
+import { ReportGettingStack } from "../lib/report-getting-stack";
+import { ReportSavingStack } from "../lib/report-saving-stack";
 
-import { logSavingStacksConfig } from "../lib/config";
+import { reportSavingStacksConfig } from "../lib/config";
 
 const app = new cdk.App();
 const configurationStack = new ConfigurationStack(
@@ -18,9 +18,9 @@ const configurationStack = new ConfigurationStack(
   },
 );
 
-const logSavingStacks = logSavingStacksConfig.map(
+const reportSavingStacks = reportSavingStacksConfig.map(
   (stackConfig) =>
-    new LogSavingStack(app, stackConfig.stackName, {
+    new ReportSavingStack(app, stackConfig.stackName, {
       env: {
         region: stackConfig.region,
       },
@@ -29,15 +29,17 @@ const logSavingStacks = logSavingStacksConfig.map(
     }),
 );
 
-new LogGettingStack(app, "WebappMonitorLogGettingStack", {
+new ReportGettingStack(app, "WebappMonitorReportGettingStack", {
   env: {
     region: "eu-central-1",
   },
   crossRegionReferences: true,
-  logSaving: {
-    regions: logSavingStacks.map((logSavingStack) => logSavingStack.region),
-    dynamodbARNs: logSavingStacks.map(
-      (logSavingStack) => logSavingStack.webMonitorTableArn,
+  reportSaving: {
+    regions: reportSavingStacks.map(
+      (reportSavingStack) => reportSavingStack.region,
+    ),
+    dynamodbARNs: reportSavingStacks.map(
+      (reportSavingStack) => reportSavingStack.webMonitorTableArn,
     ),
   },
 });

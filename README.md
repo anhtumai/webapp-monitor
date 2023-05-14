@@ -52,9 +52,10 @@ There are three different stack classes:
 
 ### Usage
 
-#### Setting configuration
+#### Configuration (for users)
 
-This section shows how can you view and modify configuration with AWS AppConfig.
+This section shows how can you view and modify application configuration
+(which consists of `url`s and `rules`) with AWS AppConfig.
 
 - Log in with IAM user name: `web-monitor-user` to AWS Account.
   (Contact me for account alias and password)
@@ -139,6 +140,48 @@ Query params:
   Response contains all log contents taking place between
   `start` (included) and `end` (included).
 
+Sample Response:
+
+```json
+{
+  "items": [
+    {
+      "time": "2023-05-14T16:04:43.226Z",
+      "logContent": {
+        "elapsedDurationInMs": 1118,
+        "startTime": "2023-05-14T16:04:43.226Z",
+        "rulesEvaluation": [
+          {
+            "rule": {
+              "containText": "Enter"
+            },
+            "knownRule": true,
+            "passed": true
+          },
+          {
+            "rule": {
+              "containText": "Login"
+            },
+            "knownRule": true,
+            "passed": false
+          },
+          {
+            "rule": {
+              "unknownRule": 1
+            },
+            "knownRule": false,
+            "passed": false
+          }
+        ],
+        "url": "https://cnn.com",
+        "statusCode": 200
+      },
+      "url": "https://cnn.com"
+    }
+  ]
+}
+```
+
 ### Deployment
 
 Deploying this software on your AWS Account requires these tools:
@@ -171,6 +214,10 @@ Deploy project:
 yarn cdk deploy --all
 ```
 
+### Configuration (for developers)
+
+Developers can configure `checking period` and `checking regions` in file: `./lib/config.ts`.
+
 ### Destroying
 
 Delete all hosted configurations in AWS AppConfig: `web-monitor-app-config-app`
@@ -178,5 +225,5 @@ Delete all hosted configurations in AWS AppConfig: `web-monitor-app-config-app`
 Run CDK destroy command:
 
 ```bash
-yarn cdk destroy
+yarn cdk destroy --all
 ```

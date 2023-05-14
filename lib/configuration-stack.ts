@@ -104,6 +104,12 @@ class AppConfigConstruct extends Construct {
   }
 }
 
+/*
+ * ConfigurationStack allows users to specify which websites to monitor and
+  which content rules the system needs to check.
+  It uses AWS AppConfig to host the configuration.
+ *
+ */
 export class ConfigurationStack extends Stack {
   readonly appConfig: {
     readonly applicationId: string;

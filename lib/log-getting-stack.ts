@@ -14,6 +14,11 @@ interface LogGettingStackProps extends StackProps {
   };
 }
 
+/*
+ * Log Getting Stack exposes a GET Endpoint for users to query logs stored in
+  DynamoDB Tables in different regions.
+  It consists of one AWS Lambda and one API Gateway Rest API.
+ */
 export class LogGettingStack extends Stack {
   constructor(scope: Construct, id: string, props: LogGettingStackProps) {
     super(scope, id, props);

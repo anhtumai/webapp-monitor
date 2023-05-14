@@ -31,6 +31,14 @@ type ContainTextRule = {
   containText: string;
 };
 
+/**
+ * Rule evaluation output
+ * rule (WebMonitorRule): web monitor rule from configuration
+ * passed (boolean): whether HTML response matches the rule or not
+ * knownRule (boolean): whether the backend knows about this rule.
+ *
+ * If `knownRule` is `false`, `passed` is also `false`
+ */
 type RuleEvaluationOutput = {
   rule: WebMonitorRule;
   passed: boolean;

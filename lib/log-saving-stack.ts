@@ -1,12 +1,27 @@
 import path = require("path");
 
-import { Duration, Stack, StackProps } from "aws-cdk-lib";
+import {
+  aws_events,
+  aws_events_targets,
+  Duration,
+  Stack,
+  StackProps,
+} from "aws-cdk-lib";
 import { Runtime } from "aws-cdk-lib/aws-lambda";
 import { LogLevel, NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
-import { Construct } from "constructs";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 
+import { Construct } from "constructs";
+
+import { logSavingWebMonitorLambdaSchedule } from "./config";
+
+/*
+ * LogSavingStack periodically sends GET requests to a list of websites,
+  analyzes their response contents to check if they satisfy predefined rules,
+  and logs the report into DynamoDB Table.
+  It consists of one AWS Lambda scheduled by Cloudwatch Event and one DynamoDB table.
+ */
 interface LogSavingStackProps extends StackProps {
   readonly appConfig: {
     readonly applicationId: string;
@@ -73,6 +88,12 @@ export class LogSavingStack extends Stack {
         statements: [appConfigPolicy],
       }),
     );
+
+    new aws_events.Rule(this, "web-monitor-lambda-schedule-rule", {
+      description: "Web Monitor Lambda Schedule",
+      targets: [new aws_events_targets.LambdaFunction(webMonitorLambda)],
+      schedule: logSavingWebMonitorLambdaSchedule,
+    });
 
     webMonitorTable.grantWriteData(webMonitorLambda);
 

@@ -194,7 +194,10 @@ export async function handler() {
       try {
         const reportContentOutput = await monitorWebsite(webMonitorConfig);
 
-        console.log("Report Cotent", reportContentOutput);
+        console.log(
+          "Report Cotent",
+          JSON.stringify(reportContentOutput, null, 4),
+        );
         await putReportContentInDBTable(reportContentOutput);
       } catch (error) {
         console.error(

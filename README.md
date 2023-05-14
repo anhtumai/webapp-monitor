@@ -88,6 +88,16 @@ Here is the configuration JSON Schema:
 }
 ```
 
+Supported rules:
+
+- ContainTextRule: check if text is in HTML response
+
+  ```json
+  {
+  "containText": string
+  }
+  ```
+
 Sample configuration:
 
 ```json

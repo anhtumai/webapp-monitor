@@ -46,6 +46,32 @@ function validateEventQueryStringParameters(
     };
   }
 
+  if (typeof start === "string") {
+    if (isNaN(Date.parse(start))) {
+      return {
+        error:
+          "`start` must be in ISO 8601 datetime format (exp: 2023-01-01 or 2023-01-01T00:00:00.000Z)",
+      };
+    }
+  }
+
+  if (typeof end === "string") {
+    if (isNaN(Date.parse(end))) {
+      return {
+        error:
+          "`end` must be in ISO 8601 datetime format (exp: 2023-01-01 or 2023-01-01T00:00:00.000Z)",
+      };
+    }
+  }
+
+  if (typeof start === "string" && typeof end === "string") {
+    if (end <= start) {
+      return {
+        error: "`start` param must be smaller than `end` param",
+      };
+    }
+  }
+
   return {
     data: {
       url,
@@ -75,25 +101,39 @@ export async function handler(
 
   const { url, region, limit, start, end } = validateQueryParamsResponse.data;
 
-  const keyConditionExpressionTerms = ["#url = :url"];
+  const urlKeyConditionTerm = "#url = :url";
   const expressionAttributeNames: Record<string, string> = { "#url": "url" };
   const expressionAttributeValues: Record<string, string> = { ":url": url };
 
   if (typeof start === "string") {
-    keyConditionExpressionTerms.push("#time >= :start");
     expressionAttributeNames["#time"] = "time";
     expressionAttributeValues[":start"] = start;
   }
 
   if (typeof end === "string") {
-    keyConditionExpressionTerms.push("#time <= :end");
     expressionAttributeNames["#time"] = "time";
     expressionAttributeValues[":end"] = end;
   }
 
+  const keyConditionExpression = (() => {
+    if (typeof start === "string" && typeof end === "string") {
+      return `${urlKeyConditionTerm} and #time BETWEEN :start AND :end`;
+    }
+
+    if (typeof start === "string") {
+      return `${urlKeyConditionTerm} and #time >= :start`;
+    }
+
+    if (typeof end === "string") {
+      return `${urlKeyConditionTerm} and #time <= :end`;
+    }
+
+    return urlKeyConditionTerm;
+  })();
+
   const queryCommandInput: QueryCommandInput = {
     TableName: LOG_SAVING_TABLE_NAME,
-    KeyConditionExpression: keyConditionExpressionTerms.join(" and "),
+    KeyConditionExpression: keyConditionExpression,
     Limit: limit ? Number(limit) : undefined,
     ExpressionAttributeNames: expressionAttributeNames,
     ExpressionAttributeValues: expressionAttributeValues,

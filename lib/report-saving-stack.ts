@@ -58,7 +58,7 @@ export class ReportSavingStack extends Stack {
     const webMonitorLambda = new NodejsFunction(this, "web-monitor-lambda", {
       functionName: "web-monitor-lambda",
       description: "Lambda for monitoring",
-      entry: path.join(__dirname, "../lambdas/reportSaving/index"),
+      entry: path.join(__dirname, "../lambdas/reportSaving/index.ts"),
       handler: "handler",
       timeout: Duration.seconds(300),
       runtime: Runtime.NODEJS_18_X,

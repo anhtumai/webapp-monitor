@@ -214,6 +214,10 @@ Deploy project:
 yarn cdk deploy --all
 ```
 
+**Note**: After deploying project, we also need to deploy a configuration
+(as instruction in [Configuration (for users)](#Configuration "for users")
+Otherwise, Web Monitor Lambda cannot run.
+
 ### Configuration (for developers)
 
 Developers can configure `checking period` and `checking regions` in file: `./lib/config.ts`.

@@ -9,6 +9,19 @@ import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 
 import { LOG_SAVING_REGIONS, LOG_SAVING_TABLE_NAME } from "./config";
 
+/*
+ *
+ * Query params:
+- url (string): website link (exp: `https://cnn.com`)
+- region (string): checking region that web monitoring starts from.
+  Supported regions: `eu-central-1`, `eu-west-1`
+- limit (number): the maximum number of log content items you want to get
+- start (string) (optional): start time in ISO 8601 datetime format (exp: 2023-05-01T00:00:00.000Z).
+- end (string) (optional): end time in ISO 8601 datetime format (exp: 2023-05-01T00:00:00.000Z).
+  Response contains all log contents taking place between
+  `start` (included) and `end` (included).
+ *
+ */
 type GetLogContentsQueryParams = {
   url: string;
   region: string;

@@ -22,7 +22,6 @@ import {
 
 type WebMonitorConfig = {
   url: string;
-  request: "GET" | "POST" | "PUT" | "DELETE";
   rules: WebMonitorRule[];
 };
 
@@ -38,7 +37,7 @@ type RuleEvaluationOutput = {
   knownRule: boolean;
 };
 
-type LogOutput = {
+type LogContentOutput = {
   url: string;
   statusCode: number;
   startTime: string;
@@ -104,9 +103,15 @@ function evaluateRules({
   });
 }
 
-async function monitorOneWebsite(
+/*
+ * Send a GET request to an url, check the response status code and measure elapsed time taken for the server to fulfil a request
+ * Parse their HTML response into DOM tree and check if it matches specified rules.
+ *
+ * Summarise these pieces of information into an object and return it.
+ */
+async function monitorWebsite(
   webMonitorConfig: WebMonitorConfig,
-): Promise<LogOutput> {
+): Promise<LogContentOutput> {
   const response = await got.get(webMonitorConfig.url);
 
   const elapsedDurationInMs = getElapsedDurationInMs(response);
@@ -136,20 +141,20 @@ async function monitorOneWebsite(
   };
 }
 
-async function writeToDb(logOutput: LogOutput) {
+async function putLogContentInDBTable(logContentOutput: LogContentOutput) {
   await ddbDocClient.send(
     new PutCommand({
       TableName: WEB_MONITOR_DYNAMODB,
       Item: {
-        url: logOutput.url,
-        time: logOutput.startTime,
-        logContent: JSON.stringify(logOutput),
+        url: logContentOutput.url,
+        time: logContentOutput.startTime,
+        logContent: logContentOutput,
       },
     }),
   );
 }
 
-async function getConfiguration(): Promise<WebMonitorConfig[]> {
+async function getConfigurationFromAppConfig(): Promise<WebMonitorConfig[]> {
   const startConfigurationSessionResponse = await appConfigDataClient.send(
     new StartConfigurationSessionCommand({
       ApplicationIdentifier: APP_CONFIG_APPLICATION_ID,
@@ -173,11 +178,18 @@ async function getConfiguration(): Promise<WebMonitorConfig[]> {
 }
 
 export async function handler(event: any) {
-  const appConfigData = await getConfiguration();
+  const appConfigData = await getConfigurationFromAppConfig();
   await Promise.all(
     appConfigData.map(async (webMonitorConfig) => {
-      const logOutput = await monitorOneWebsite(webMonitorConfig);
-      await writeToDb(logOutput);
+      try {
+        const logContentOutput = await monitorWebsite(webMonitorConfig);
+        await putLogContentInDBTable(logContentOutput);
+      } catch (error) {
+        console.error(
+          `Fail to monitor and check response of config ${webMonitorConfig}`,
+        );
+        console.error(error);
+      }
     }),
   );
 }

@@ -62,7 +62,6 @@ This section shows how can you view and modify configuration with AWS AppConfig.
 
   [set-configuration-web-monitor.webm](https://github.com/anhtumai/webapp-monitor/assets/32799668/6d5355da-1b7b-4e22-921e-d07654a2781c)
 
-
 Here is the configuration JSON Schema:
 
 ```json
@@ -144,8 +143,11 @@ Query params:
 
 Deploying this software on your AWS Account requires these tools:
 
+**Prerequisites**
+
 - NodeJs runtime, version 16+
 - Yarn package manager
+- Docker
 
 Inintialize and install project dependencies:
 

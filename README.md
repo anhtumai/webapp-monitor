@@ -13,8 +13,8 @@ What it does:
 - Periodically makes a GET Request to each URL.
 - Check if the response content passes the requirements.
 - Measure the elapsed time it takes for the website to respond.
-- Store these pieces of information in databases.
-- Expose a user-friendly HTTP endpoint to get these pieces of information.
+- Store monitoring reports in databases.
+- Expose a user-friendly HTTP endpoint to get these monitoring reports.
 
 Its features:
 
@@ -23,7 +23,7 @@ Its features:
   before deployment.
 - Monitoring activities take place from **more than one**
   geographically distributed location simultaneously.
-- Developers can set checking periods and checking locations.
+- Developers can set **checking period** and **checking locations**.
 
 ## How does WebMonitor work
 
@@ -35,16 +35,16 @@ This section describes the high-level architecture of WebMonitor on AWS Cloud.
 
 There are three different stack classes:
 
-- Configuration Stack: allows users to specify which websites to monitor and
+- ConfigurationStack: allows users to specify which websites to monitor and
   which content rules the system needs to check.
   It uses AWS AppConfig to host the configuration.
 
-- Log Saving Stack: periodically sends GET requests to a list of websites,
+- ReportSavingStack: periodically sends GET requests to a list of websites,
   analyzes their response contents to check if they satisfy predefined rules,
-  and logs the report into DynamoDB Table.
+  and put monitoring reports into DynamoDB Table.
   It consists of one AWS Lambda scheduled by Cloudwatch Event and one DynamoDB table.
 
-- Log Getting Stack: exposes a GET Endpoint for users to query logs stored in
+- ReportGettingStack: exposes a GET Endpoint for users to query reports stored in
   DynamoDB Tables in different regions.
   It consists of one AWS Lambda and one API Gateway Rest API.
 
@@ -112,9 +112,9 @@ Sample configuration:
 ]
 ```
 
-#### Getting log contents
+#### Getting report contents
 
-Send a GET request to query log contents for a specific url and checking region
+Send a GET request to query report contents for a specific url and checking region
 
 Example:
 
@@ -134,11 +134,11 @@ Query params:
 - url (string): website link (exp: `https://cnn.com`)
 - region (string): checking region that web monitoring starts from.
   Supported regions: `eu-central-1`, `eu-west-1`
-- limit (number): the maximum number of log content items you want to get
+- limit (number): the maximum number of report content items you want to get
 - start (string) (optional): start time in ISO 8601 datetime format (exp: 2023-05-01T00:00:00.000Z).
 - end (string) (optional): end time in ISO 8601 datetime format (exp: 2023-05-01T00:00:00.000Z).
-  Response contains all log contents taking place between
-  `start` (included) and `end` (included).
+  Response contains all report contents taking place between
+  `start` (inclusive) and `end` (inclusive).
 
 Sample Response:
 
@@ -147,7 +147,7 @@ Sample Response:
   "items": [
     {
       "time": "2023-05-14T16:04:43.226Z",
-      "logContent": {
+      "reportContent": {
         "elapsedDurationInMs": 1118,
         "startTime": "2023-05-14T16:04:43.226Z",
         "rulesEvaluation": [

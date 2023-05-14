@@ -28,13 +28,13 @@ export class ReportGettingStack extends Stack {
       {
         functionName: "get-url-report-contents-lambda",
         description: "Get Url Report Contents",
-        entry: path.join(__dirname, "../lambdas/getUrlLogContents/index.ts"),
+        entry: path.join(__dirname, "../lambdas/getUrlReportContents/index.ts"),
         handler: "handler",
         timeout: Duration.seconds(300),
         runtime: Runtime.NODEJS_18_X,
         environment: {
-          LOG_SAVING_TABLE_NAME: "web-monitor-table",
-          LOG_SAVING_REGIONS: props.reportSaving.regions.join(","),
+          REPORT_SAVING_TABLE_NAME: "web-monitor-table",
+          REPORT_SAVING_REGIONS: props.reportSaving.regions.join(","),
         },
         bundling: {
           externalModules: ["aws-sdk"],

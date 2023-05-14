@@ -62,6 +62,10 @@ This section shows how can you view and modify application configuration
 - Follow this guide to deploy a configuration on AWS AppConfig:
 
   [set-configuration-web-monitor.webm](https://github.com/anhtumai/webapp-monitor/assets/32799668/6d5355da-1b7b-4e22-921e-d07654a2781c)
+  
+- If you want to execute WebMonitorLambda to check report content, follow this guide:
+
+  [execute-function.webm](https://github.com/anhtumai/webapp-monitor/assets/32799668/8d72dc62-71a3-4d67-8cd6-9652adf09174)
 
 Here is the configuration JSON Schema:
 

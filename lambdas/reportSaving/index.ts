@@ -187,12 +187,14 @@ async function getConfigurationFromAppConfig(): Promise<WebMonitorConfig[]> {
   return JSON.parse(plainTextConfiguration);
 }
 
-export async function handler(event: any) {
+export async function handler() {
   const appConfigData = await getConfigurationFromAppConfig();
   await Promise.all(
     appConfigData.map(async (webMonitorConfig) => {
       try {
         const reportContentOutput = await monitorWebsite(webMonitorConfig);
+
+        console.log("Report Cotent", reportContentOutput);
         await putReportContentInDBTable(reportContentOutput);
       } catch (error) {
         console.error(

@@ -60,7 +60,8 @@ This section shows how can you view and modify configuration with AWS AppConfig.
   (Contact me for account alias and password)
 - Follow this guide to deploy a configuration on AWS AppConfig:
 
-  ![Deploy configuration guidance](./documentations/set-configuration-web-monitor.webm)
+  [set-configuration-web-monitor.webm](https://github.com/anhtumai/webapp-monitor/assets/32799668/6d5355da-1b7b-4e22-921e-d07654a2781c)
+
 
 Here is the configuration JSON Schema:
 
